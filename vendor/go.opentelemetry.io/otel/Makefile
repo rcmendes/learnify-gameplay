@@ -18,7 +18,7 @@ TOOLS_MOD_DIR := ./internal/tools
 # All source code and documents. Used in spell check.
 ALL_DOCS := $(shell find . -name '*.md' -type f | sort)
 # All directories with go.mod files related to opentelemetry library. Used for building, testing and linting.
-ALL_GO_MOD_DIRS := $(filter-out $(TOOLS_MOD_DIR), $(shell find . -type f -name 'go.mod' -exec dirname {} \; | sort))
+ALL_GO_MOD_DIRS := $(filter-out $(TOOLS_MOD_DIR), $(shell find . -type f -name 'go.mod' -exec dirname {} \; | egrep -v '^./example' | sort)) $(shell find ./example -type f -name 'go.mod' -exec dirname {} \; | sort)
 ALL_COVERAGE_MOD_DIRS := $(shell find . -type f -name 'go.mod' -exec dirname {} \; | egrep -v '^./example|^$(TOOLS_MOD_DIR)' | sort)
 
 # Mac OS Catalina 10.5.x doesn't support 386. Hence skip 386 test
@@ -132,7 +132,7 @@ test-benchmarks:
 	done
 
 .PHONY: lint
-lint: $(TOOLS_DIR)/golangci-lint $(TOOLS_DIR)/misspell
+lint: $(TOOLS_DIR)/golangci-lint $(TOOLS_DIR)/misspell lint-modules
 	set -e; for dir in $(ALL_GO_MOD_DIRS); do \
 	  echo "golangci-lint in $${dir}"; \
 	  (cd "$${dir}" && \
@@ -140,11 +140,16 @@ lint: $(TOOLS_DIR)/golangci-lint $(TOOLS_DIR)/misspell
 	    $(TOOLS_DIR)/golangci-lint run); \
 	done
 	$(TOOLS_DIR)/misspell -w $(ALL_DOCS)
+
+.PHONY: lint-modules
+lint-modules:
 	set -e; for dir in $(ALL_GO_MOD_DIRS) $(TOOLS_MOD_DIR); do \
 	  echo "go mod tidy in $${dir}"; \
 	  (cd "$${dir}" && \
 	    go mod tidy); \
 	done
+	echo "cross-linking all go modules"
+	(cd internal/tools; go run ./crosslink)
 
 generate: $(TOOLS_DIR)/stringer
 	set -e; for dir in $(ALL_GO_MOD_DIRS); do \

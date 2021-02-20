@@ -11,6 +11,9 @@ package fiber
 
 import (
 	"bufio"
+	"crypto/tls"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -26,12 +29,11 @@ import (
 	"github.com/gofiber/fiber/v2/internal/colorable"
 	"github.com/gofiber/fiber/v2/internal/isatty"
 	"github.com/gofiber/fiber/v2/utils"
-
 	"github.com/valyala/fasthttp"
 )
 
 // Version of current fiber package
-const Version = "2.2.0"
+const Version = "2.5.0"
 
 // Handler defines a function to serve HTTP requests.
 type Handler = func(*Ctx) error
@@ -39,27 +41,27 @@ type Handler = func(*Ctx) error
 // Map is a shortcut for map[string]interface{}, useful for JSON returns
 type Map map[string]interface{}
 
-// Storage interface that is implemented by storage providers for different
-// middleware packages like cache, limiter, session and csrf
+// Storage interface for communicating with different database/key-value
+// providers
 type Storage interface {
-	// Get retrieves the value for the given key.
-	// If no value is not found it returns ErrNotExit error
+	// Get gets the value for the given key.
+	// It returns ErrNotFound if the storage does not contain the key.
 	Get(key string) ([]byte, error)
 
 	// Set stores the given value for the given key along with a
 	// time-to-live expiration value, 0 means live for ever
-	// The key must not be "" and the empty values are ignored.
+	// Empty key or value will be ignored without an error.
 	Set(key string, val []byte, ttl time.Duration) error
 
-	// Delete deletes the stored value for the given key.
-	// Deleting a non-existing key-value pair does NOT lead to an error.
-	// The key must not be "".
+	// Delete deletes the value for the given key.
+	// It returns no error if the storage does not contain the key,
 	Delete(key string) error
 
-	// Reset the storage
+	// Reset resets the storage and delete all keys.
 	Reset() error
 
-	// Close the storage
+	// Close closes the storage and will stop any running garbage
+	// collectors and open connections.
 	Close() error
 }
 
@@ -90,6 +92,8 @@ type App struct {
 	stack [][]*Route
 	// Route stack divided by HTTP methods and route prefixes
 	treeStack []map[string][]*Route
+	// contains the information if the route stack has been changed to build the optimized tree
+	routesRefreshed bool
 	// Amount of registered routes
 	routesCount int
 	// Amount of registered handlers
@@ -136,8 +140,9 @@ type Config struct {
 	Immutable bool `json:"immutable"`
 
 	// When set to true, converts all encoded characters in the route back
-	// before setting the path for the context, so that the routing can also
-	// work with urlencoded special characters.
+	// before setting the path for the context, so that the routing,
+	// the returning of the current url from the context `ctx.Path()`
+	// and the paramters `ctx.Params(%key%)` with decoded characters will work
 	//
 	// Default: false
 	UnescapePath bool `json:"unescape_path"`
@@ -149,6 +154,8 @@ type Config struct {
 	ETag bool `json:"etag"`
 
 	// Max body size that the server accepts.
+	// -1 will decline any body size
+	//
 	// Default: 4 * 1024 * 1024
 	BodyLimit int `json:"body_limit"`
 
@@ -265,6 +272,19 @@ type Config struct {
 	//
 	// Default: false
 	// RedirectFixedPath bool
+
+	// When set by an external client of Fiber it will use the provided implementation of a
+	// JSONMarshal
+	//
+	// Allowing for flexibility in using another json library for encoding
+	// Default: json.Marshal
+	JSONEncoder utils.JSONMarshal `json:"-"`
+
+	// Known networks are "tcp", "tcp4" (IPv4-only), "tcp6" (IPv6-only)
+	// WARNING: When prefork is set to true, only "tcp4" and "tcp6" can be chose.
+	//
+	// Default: NetworkTCP4
+	Network string
 }
 
 // Static defines configuration options when defining static assets.
@@ -297,6 +317,11 @@ type Static struct {
 	//
 	// Optional. Default value 0.
 	MaxAge int `json:"max_age"`
+
+	// Next defines a function to skip this middleware when returned true.
+	//
+	// Optional. Default: nil
+	Next func(c *Ctx) bool
 }
 
 // Default Config values
@@ -352,7 +377,7 @@ func New(config ...Config) *App {
 	}
 
 	// Override default values
-	if app.config.BodyLimit <= 0 {
+	if app.config.BodyLimit == 0 {
 		app.config.BodyLimit = DefaultBodyLimit
 	}
 	if app.config.Concurrency <= 0 {
@@ -373,13 +398,21 @@ func New(config ...Config) *App {
 	if app.config.ErrorHandler == nil {
 		app.config.ErrorHandler = DefaultErrorHandler
 	}
+	if app.config.JSONEncoder == nil {
+		app.config.JSONEncoder = json.Marshal
+	}
+	if app.config.Network == "" {
+		app.config.Network = NetworkTCP4
+	}
+
 	// Init app
 	app.init()
+
 	// Return app
 	return app
 }
 
-// Mount attaches another app instance as a subrouter along a routing path.
+// Mount attaches another app instance as a sub-router along a routing path.
 // It's very useful to split up a large API as many independent routers and
 // compose them as a single service using Mount.
 func (app *App) Mount(prefix string, fiber *App) Router {
@@ -528,16 +561,16 @@ func NewError(code int, message ...string) *Error {
 func (app *App) Listener(ln net.Listener) error {
 	// Prefork is supported for custom listeners
 	if app.config.Prefork {
-		addr, tls := lnMetadata(ln)
-		return app.prefork(addr, tls)
+		addr, tlsConfig := lnMetadata(app.config.Network, ln)
+		return app.prefork(app.config.Network, addr, tlsConfig)
 	}
-
+	// prepare the server for the start
+	app.startupProcess()
 	// Print startup message
 	if !app.config.DisableStartupMessage {
 		app.startupMessage(ln.Addr().String(), false, "")
 	}
-
-	// TODO: Detect TLS
+	// Start listening
 	return app.server.Serve(ln)
 }
 
@@ -548,19 +581,61 @@ func (app *App) Listener(ln net.Listener) error {
 func (app *App) Listen(addr string) error {
 	// Start prefork
 	if app.config.Prefork {
-		return app.prefork(addr, nil)
+		return app.prefork(app.config.Network, addr, nil)
 	}
 	// Setup listener
-	ln, err := net.Listen("tcp4", addr)
+	ln, err := net.Listen(app.config.Network, addr)
 	if err != nil {
 		return err
 	}
+	// prepare the server for the start
+	app.startupProcess()
 	// Print startup message
 	if !app.config.DisableStartupMessage {
 		app.startupMessage(ln.Addr().String(), false, "")
 	}
 	// Start listening
 	return app.server.Serve(ln)
+}
+
+// ListenTLS serves HTTPs requests from the given addr.
+// certFile and keyFile are the paths to TLS certificate and key file.
+
+//  app.ListenTLS(":8080", "./cert.pem", "./cert.key")
+//  app.ListenTLS(":8080", "./cert.pem", "./cert.key")
+func (app *App) ListenTLS(addr, certFile, keyFile string) error {
+	// Check for valid cert/key path
+	if len(certFile) == 0 || len(keyFile) == 0 {
+		return errors.New("tls: provide a valid cert or key path")
+	}
+	// Prefork is supported
+	if app.config.Prefork {
+		cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+		if err != nil {
+			return fmt.Errorf("tls: cannot load TLS key pair from certFile=%q and keyFile=%q: %s", certFile, keyFile, err)
+		}
+		config := &tls.Config{
+			MinVersion:               tls.VersionTLS12,
+			PreferServerCipherSuites: true,
+			Certificates: []tls.Certificate{
+				cert,
+			},
+		}
+		return app.prefork(app.config.Network, addr, config)
+	}
+	// Setup listener
+	ln, err := net.Listen(app.config.Network, addr)
+	if err != nil {
+		return err
+	}
+	// prepare the server for the start
+	app.startupProcess()
+	// Print startup message
+	if !app.config.DisableStartupMessage {
+		app.startupMessage(ln.Addr().String(), true, "")
+	}
+	// Start listening
+	return app.server.ServeTLS(ln, certFile, keyFile)
 }
 
 // Config returns the app config as value ( read-only ).
@@ -570,6 +645,8 @@ func (app *App) Config() Config {
 
 // Handler returns the server handler.
 func (app *App) Handler() fasthttp.RequestHandler {
+	// prepare the server for the start
+	app.startupProcess()
 	return app.handler
 }
 
@@ -625,6 +702,8 @@ func (app *App) Test(req *http.Request, msTimeout ...int) (resp *http.Response, 
 	if _, err = conn.r.Write(dump); err != nil {
 		return nil, err
 	}
+	// prepare the server for the start
+	app.startupProcess()
 
 	// Serve conn to server
 	channel := make(chan error)
@@ -659,7 +738,7 @@ func (app *App) Test(req *http.Request, msTimeout ...int) (resp *http.Response, 
 
 type disableLogger struct{}
 
-func (dl *disableLogger) Printf(format string, args ...interface{}) {
+func (dl *disableLogger) Printf(_ string, _ ...interface{}) {
 	// fmt.Println(fmt.Sprintf(format, args...))
 }
 
@@ -723,6 +802,15 @@ func (app *App) init() *App {
 	return app
 }
 
+// startupProcess Is the method which executes all the necessary processes just before the start of the server.
+func (app *App) startupProcess() *App {
+	app.mutex.Lock()
+	app.buildTree()
+	app.mutex.Unlock()
+	return app
+}
+
+// startupMessage prepares the startup message with the handler number, port, address and other information
 func (app *App) startupMessage(addr string, tls bool, pids string) {
 	// ignore child processes
 	if IsChild() {
@@ -735,7 +823,7 @@ func (app *App) startupMessage(addr string, tls bool, pids string) {
 	logo += " │ %s │\n"
 	logo += " │ %s │\n"
 	logo += " │                                                   │\n"
-	logo += " │ Handlers %s  Threads %s │\n"
+	logo += " │ Handlers %s  Processes %s │\n"
 	logo += " │ Prefork .%s  PID ....%s │\n"
 	logo += " └───────────────────────────────────────────────────┘"
 	logo += "%s"
@@ -811,11 +899,16 @@ func (app *App) startupMessage(addr string, tls bool, pids string) {
 		isPrefork = "Enabled"
 	}
 
+	procs := strconv.Itoa(runtime.GOMAXPROCS(0))
+	if !app.config.Prefork {
+		procs = "1"
+	}
+
 	mainLogo := fmt.Sprintf(logo,
 		cBlack,
 		centerValue(" Fiber v"+Version, 49),
 		center(addr, 49),
-		value(strconv.Itoa(app.handlerCount), 14), value(strconv.Itoa(runtime.GOMAXPROCS(0)), 14),
+		value(strconv.Itoa(app.handlerCount), 14), value(procs, 12),
 		value(isPrefork, 14), value(strconv.Itoa(os.Getpid()), 14),
 		cReset,
 	)
@@ -908,6 +1001,5 @@ func (app *App) startupMessage(addr string, tls bool, pids string) {
 		out = colorable.NewNonColorable(os.Stdout)
 	}
 
-	fmt.Fprintln(out, output)
-
+	_, _ = fmt.Fprintln(out, output)
 }
