@@ -2,9 +2,9 @@ package postgres
 
 import (
 	"github.com/go-pg/pg/v10"
-	"github.com/rcmendes/learnify/gameplay/adapters/repository/postgres/models"
-	"github.com/rcmendes/learnify/gameplay/core/entities"
-	"github.com/rcmendes/learnify/gameplay/core/ucs/ports"
+	"github.com/rcmendes/learnify-gameplay/adapters/repository/postgres/models"
+	"github.com/rcmendes/learnify-gameplay/core/entities"
+	"github.com/rcmendes/learnify-gameplay/core/ucs/ports"
 )
 
 type quizRepository struct {

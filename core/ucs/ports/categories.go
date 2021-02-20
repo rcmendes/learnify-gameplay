@@ -1,6 +1,6 @@
 package ports
 
-import "github.com/rcmendes/learnify/gameplay/core/entities"
+import "github.com/rcmendes/learnify-gameplay/core/entities"
 
 //CategoryRepository defines the services that a Cetegory repository must provide.
 type CategoryRepository interface {

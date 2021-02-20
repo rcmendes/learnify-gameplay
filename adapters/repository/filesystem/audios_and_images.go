@@ -4,7 +4,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/rcmendes/learnify/gameplay/core/ucs/ports"
+	"github.com/rcmendes/learnify-gameplay/core/ucs/ports"
 )
 
 type imageFSRepository struct {

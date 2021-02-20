@@ -6,8 +6,8 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"github.com/rcmendes/learnify/gameplay/core/entities"
-	"github.com/rcmendes/learnify/gameplay/core/ucs/ports"
+	"github.com/rcmendes/learnify-gameplay/core/entities"
+	"github.com/rcmendes/learnify-gameplay/core/ucs/ports"
 )
 
 //CreateCategoryRequest defines the basic data to create a Category entity.

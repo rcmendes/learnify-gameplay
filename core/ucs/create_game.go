@@ -5,8 +5,8 @@ import (
 	"math/rand"
 
 	"github.com/google/uuid"
-	"github.com/rcmendes/learnify/gameplay/core/entities"
-	"github.com/rcmendes/learnify/gameplay/core/ucs/ports"
+	"github.com/rcmendes/learnify-gameplay/core/entities"
+	"github.com/rcmendes/learnify-gameplay/core/ucs/ports"
 )
 
 type createGame struct {

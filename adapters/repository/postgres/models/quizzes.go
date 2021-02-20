@@ -3,7 +3,7 @@ package models
 import (
 	"fmt"
 
-	"github.com/rcmendes/learnify/gameplay/core/entities"
+	"github.com/rcmendes/learnify-gameplay/core/entities"
 )
 
 type QuizID = storableID

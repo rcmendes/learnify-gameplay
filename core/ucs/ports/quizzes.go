@@ -1,6 +1,6 @@
 package ports
 
-import "github.com/rcmendes/learnify/gameplay/core/entities"
+import "github.com/rcmendes/learnify-gameplay/core/entities"
 
 //QuizRepository defines the contract of a Quiz entity repository.
 type QuizRepository interface {

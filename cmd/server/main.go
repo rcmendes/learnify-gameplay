@@ -5,11 +5,11 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/rcmendes/learnify/gameplay/adapters/entrypoints/rest"
-	"github.com/rcmendes/learnify/gameplay/adapters/repository/filesystem"
-	"github.com/rcmendes/learnify/gameplay/adapters/repository/postgres"
-	"github.com/rcmendes/learnify/gameplay/config/routes"
-	"github.com/rcmendes/learnify/gameplay/core/ucs"
+	"github.com/rcmendes/learnify-gameplay/adapters/entrypoints/rest"
+	"github.com/rcmendes/learnify-gameplay/adapters/repository/filesystem"
+	"github.com/rcmendes/learnify-gameplay/adapters/repository/postgres"
+	"github.com/rcmendes/learnify-gameplay/config/routes"
+	"github.com/rcmendes/learnify-gameplay/core/ucs"
 )
 
 func main() {

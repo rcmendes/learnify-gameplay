@@ -2,7 +2,7 @@ package models
 
 import (
 	"github.com/google/uuid"
-	"github.com/rcmendes/learnify/gameplay/core/entities"
+	"github.com/rcmendes/learnify-gameplay/core/entities"
 )
 
 type GameModel struct {

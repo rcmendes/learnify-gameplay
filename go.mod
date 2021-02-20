@@ -1,4 +1,4 @@
-module github.com/rcmendes/learnify.gameplay
+module github.com/rcmendes/learnify-gameplay
 
 go 1.15
 

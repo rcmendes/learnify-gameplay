@@ -4,8 +4,8 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/rcmendes/learnify/gameplay/core/entities"
-	"github.com/rcmendes/learnify/gameplay/core/ucs/ports"
+	"github.com/rcmendes/learnify-gameplay/core/entities"
+	"github.com/rcmendes/learnify-gameplay/core/ucs/ports"
 )
 
 type findOneNotPlayedGameQuiz struct {

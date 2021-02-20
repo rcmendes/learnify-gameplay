@@ -3,8 +3,8 @@ package ucs
 import (
 	"fmt"
 
-	"github.com/rcmendes/learnify/gameplay/core/entities"
-	"github.com/rcmendes/learnify/gameplay/core/ucs/ports"
+	"github.com/rcmendes/learnify-gameplay/core/entities"
+	"github.com/rcmendes/learnify-gameplay/core/ucs/ports"
 )
 
 type validateAnswerGameQuiz struct {
