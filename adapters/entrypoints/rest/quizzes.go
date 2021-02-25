@@ -40,18 +40,18 @@ func NewQuizController(
 
 //QuizDTO defines the data returned when fetching a Quiz entity.
 type QuizDTO struct {
-	ID       uuid.UUID `json:"uuid"`
-	Category string    `json:"category"`
-	Palavra  string    `json:"palavra"`
-	Mot      string    `json:"mot"`
+	ID         uuid.UUID `json:"id"`
+	CategoryID uuid.UUID `json:"category_id"`
+	Palavra    string    `json:"palavra"`
+	Mot        string    `json:"mot"`
 }
 
 func NewQuizDTO(q *entities.Quiz) *QuizDTO {
 	return &QuizDTO{
-		ID:       q.ID,
-		Category: q.Category,
-		Palavra:  q.Palavra,
-		Mot:      q.Mot,
+		ID:         q.ID,
+		CategoryID: q.CategoryID,
+		Palavra:    q.Palavra,
+		Mot:        q.Mot,
 	}
 }
 
@@ -110,7 +110,7 @@ func (controller *quizController) FindOneByID(c *fiber.Ctx) error {
 }
 
 func (controller *quizController) DeleteByID(c *fiber.Ctx) error {
-	return c.SendString("Delete a Quiz by UUID")
+	return c.SendString("Delete a Quiz by ID")
 }
 
 func (controller *quizController) Create(c *fiber.Ctx) error {

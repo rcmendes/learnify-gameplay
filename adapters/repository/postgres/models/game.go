@@ -1,21 +1,26 @@
 package models
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/rcmendes/learnify-gameplay/core/entities"
 )
 
 type GameModel struct {
-	Storable
-	tableName struct{} `pg:"game"`
-	// PlayerID  uuid.UUID   `pg:"player_id"`
-	Status  uint8       `pg:"status"`
-	Quizzes []*GameQuiz //`pg:"rel:has-many"`
+	// Storable
+	ID        storableID  `db:"id"`
+	CreatedAt *time.Time  `db:"created_at"`
+	UpdatedAt *time.Time  `db:"updated_at"`
+	tableName struct{}    `db:"game"`
+	PlayerID  uuid.UUID   `db:"player_id"`
+	Status    uint8       `db:"status"`
+	Quizzes   []*GameQuiz //`pg:"rel:has-many"`
 }
 
 func (m *GameModel) Load(game entities.Game) {
 	m.ID = game.ID
-	// m.PlayerID = game.Player.ID
+	m.PlayerID = game.Player.ID
 	m.Status = game.Status
 
 	m.Quizzes = make([]*GameQuiz, 0, len(game.Quizzes))
@@ -50,8 +55,7 @@ func (m *GameModel) To() entities.Game {
 }
 
 type GameQuiz struct {
-	tableName struct{}  `pg:"game_quiz"`
-	GameID    uuid.UUID `pg:"game_id"`
-	QuizID    uuid.UUID `pg:"quiz_id"`
-	Status    uint8     `pg:"status"`
+	GameID uuid.UUID `db:"game_id"`
+	QuizID uuid.UUID `db:"quiz_id"`
+	Status uint8     `db:"status"`
 }

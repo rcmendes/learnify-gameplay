@@ -5,36 +5,45 @@ import (
 	"github.com/rcmendes/learnify-gameplay/adapters/repository/postgres/models"
 	"github.com/rcmendes/learnify-gameplay/core/entities"
 	"github.com/rcmendes/learnify-gameplay/core/ucs/ports"
+	"go.uber.org/zap"
 )
 
 type gamePostgresRepository struct {
 	connectFunc func() *pg.DB
+	logger      *zap.Logger
 }
 
 func NewGamePostgresRepository() ports.GameRepository {
+	//TODO review this logger init (put as parameter and create an adapter)
+	logger, _ := zap.NewDevelopment()
 	return &gamePostgresRepository{
 		connectFunc: Connect,
+		logger:      logger,
 	}
 }
 
 func (repo *gamePostgresRepository) Insert(game entities.Game) error {
-	conn := repo.connectFunc()
-	defer conn.Close()
+	defer repo.logger.Sync()
+	conn := connect()
 
 	model := models.GameModel{}
 	model.Load(game)
 
-	_, err := conn.Conn().Model(&model).Insert()
+	query := `INSERT INTO games (id, player_id, status) VALUES (:id, :player_id, :status)`
+	_, err := conn.NamedExec(query, model)
 	if err != nil {
-		//TODO Handle error
+		//TODO HandleError
+		// repo.logger.Error(err.String())
 		return err
 	}
 
+	query = `INSERT INTO game_quizzes (game_id, quiz_id, status) VALUES (:game_id, :quiz_id, :status)`
 	for _, quiz := range model.Quizzes {
 		quiz.GameID = model.ID
-		_, err := conn.Model(quiz).Insert()
+		_, err := conn.NamedExec(query, quiz)
 		if err != nil {
-			//TODO Handle error
+			//TODO HandleError
+			// repo.logger.Error(err.String())
 			return err
 		}
 	}

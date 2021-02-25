@@ -13,12 +13,12 @@ type QuizID = uuid.UUID
 
 //Quiz defines the properties of a Quiz database entity.
 type Quiz struct {
-	ID       QuizID
-	Category string
-	Palavra  string
-	Mot      string
-	Image    MediaInfo
-	Audio    MediaInfo
+	ID         QuizID
+	CategoryID CategoryID
+	Palavra    string
+	Mot        string
+	Image      MediaInfo
+	Audio      MediaInfo
 }
 
 type QuizList = []*Quiz
@@ -32,7 +32,7 @@ type MediaInfo struct {
 func (q *Quiz) String() string {
 	return fmt.Sprintf("Quiz <category=%s, "+
 		"palavra=%s, mot=%s, image=%s, audio=%s>",
-		q.Category, q.Palavra, q.Mot, q.Image.Name, q.Audio.Name)
+		q.CategoryID, q.Palavra, q.Mot, q.Image.Name, q.Audio.Name)
 }
 
 func extractExtensionFromFilename(filename string) string {

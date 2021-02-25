@@ -1,6 +1,9 @@
 package ports
 
-import "github.com/rcmendes/learnify-gameplay/core/entities"
+import (
+	"github.com/google/uuid"
+	"github.com/rcmendes/learnify-gameplay/core/entities"
+)
 
 type GameRepository interface {
 	Insert(game entities.Game) error
@@ -8,8 +11,14 @@ type GameRepository interface {
 	Update(game entities.Game, propagate bool) error
 }
 
+//CreateGameInput defines the data to create a new Game.
+type CreateGameInput interface {
+	PlayerID() uuid.UUID
+	CategoryID() uuid.UUID
+}
+
 type CreateGame interface {
-	Create(game entities.NewGameData) (*entities.GameID, error)
+	Create(input CreateGameInput) (*entities.GameID, error)
 }
 
 type ValidateAnswerGameQuiz interface {

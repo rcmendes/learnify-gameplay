@@ -76,7 +76,7 @@ func (repo *quizRepository) FindQuizzesSameCategory(id entities.QuizID) (entitie
 	var list []models.QuizModel
 
 	if err := conn.Model(&list).
-		Where("category = ?", quiz.Category).
+		Where("category = ?", quiz.CategoryID).
 		Select(); err != nil {
 
 		return nil, err

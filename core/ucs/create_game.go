@@ -22,16 +22,16 @@ func MakeCreateGame(gameRepo ports.GameRepository, quizRepo ports.QuizRepository
 }
 
 //Create is a method that creates a game.
-func (uc *createGame) Create(newGame entities.NewGameData) (*entities.GameID, error) {
+func (uc *createGame) Create(newGame ports.CreateGameInput) (*entities.GameID, error) {
 	//TODO Validate if the player exists
 
 	gameID := uuid.New()
 
-	game := entities.NewGame(gameID, entities.NewPlayer(newGame.PlayerID))
+	game := entities.NewGame(gameID, entities.NewPlayer(newGame.PlayerID()))
 
 	//TODO Replace for an application parameter.
 	totalOfGameQuizzes := 4
-	category := entities.Category{ID: newGame.CategoryID}
+	category := entities.Category{ID: newGame.CategoryID(), Name: "animais"}
 	quizzes, err := uc.quizRepo.FindQuizByCategoryName(category.Name)
 	if err != nil {
 		//TODO handle error
@@ -44,6 +44,7 @@ func (uc *createGame) Create(newGame entities.NewGameData) (*entities.GameID, er
 		return nil, fmt.Errorf("no quiz found for this category")
 	}
 
+	//TODO use shufffle
 	for i := 0; i < length && i < totalOfGameQuizzes; i++ {
 		index := rand.Intn(length - 1)
 		quiz := *quizzes[index]

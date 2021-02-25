@@ -7,12 +7,6 @@ import (
 //GameID defines the type of the ID of a Game
 type GameID = uuid.UUID
 
-//NewGameData defines the data to create a new Game.
-type NewGameData struct {
-	PlayerID   PlayerID
-	CategoryID CategoryID
-}
-
 //Game defines the structure of a Game.
 type Game struct {
 	ID      GameID

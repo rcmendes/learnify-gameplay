@@ -16,6 +16,21 @@ type CreateCategoryRequest struct {
 	Description *string `json:"description"`
 }
 
+//CategoryDTOResponse defines the response structure of a Category.
+type CategoryDTOResponse struct {
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Description *string   `json:"description"`
+}
+
+func NewCategoryDTOResponse(category *entities.Category) *CategoryDTOResponse {
+	return &CategoryDTOResponse{
+		ID:          category.ID,
+		Name:        category.Name,
+		Description: category.Description,
+	}
+}
+
 func (input *CreateCategoryRequest) To() *entities.NewCategory {
 	return &entities.NewCategory{
 		Name:        input.Name,
@@ -64,7 +79,12 @@ func (ctrl *categoryController) ListAll(c *fiber.Ctx) error {
 		return err
 	}
 
-	return c.JSON(categories)
+	list := make([]*CategoryDTOResponse, 0, len(categories))
+	for _, c := range categories {
+		list = append(list, NewCategoryDTOResponse(c))
+	}
+
+	return c.JSON(list)
 }
 
 func (ctrl *categoryController) Create(c *fiber.Ctx) error {

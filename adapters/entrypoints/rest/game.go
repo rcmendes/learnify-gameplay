@@ -3,7 +3,6 @@ package rest
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"github.com/rcmendes/learnify-gameplay/core/entities"
 	"github.com/rcmendes/learnify-gameplay/core/ucs/ports"
 )
 
@@ -33,8 +32,21 @@ func NewGameController(
 
 //CreateGameRequest defines the contract of a request for creating a Game.
 type CreateGameRequest struct {
-	CategoryID uuid.UUID `json:"category_id"`
-	PlayerID   uuid.UUID `json:"player_id"`
+	CategoryId *uuid.UUID `json:"category_id"`
+	PlayerId   *uuid.UUID `json:"player_id"`
+}
+
+func (req *CreateGameRequest) CategoryID() uuid.UUID {
+	return *req.CategoryId
+}
+
+func (req *CreateGameRequest) PlayerID() uuid.UUID {
+	return *req.PlayerId
+
+}
+
+func (req *CreateGameRequest) Validate() bool {
+	return req.CategoryId == nil || req.PlayerId == nil
 }
 
 //CreateGameResponse defines the contract of the response of creating a Game.
@@ -59,16 +71,11 @@ type CreateGameResponse struct {
 func (ctrl *gameController) Create(c *fiber.Ctx) error {
 	request := new(CreateGameRequest)
 
-	if err := c.BodyParser(request); err != nil {
-		//TODO handle error
-		return err
+	if err := c.BodyParser(request); err != nil || request.Validate() {
+		return fiber.ErrBadRequest
 	}
 
-	newGame := entities.NewGameData{
-		PlayerID:   request.PlayerID,
-		CategoryID: request.CategoryID,
-	}
-	id, err := ctrl.create.Create(newGame)
+	id, err := ctrl.create.Create(request)
 
 	if err != nil {
 		//TODO Handle Error
