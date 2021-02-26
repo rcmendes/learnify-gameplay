@@ -6,11 +6,13 @@ import "github.com/google/uuid"
 type PlayerID = uuid.UUID
 
 type Player struct {
-	ID PlayerID
+	ID   PlayerID
+	Name string
 }
 
-func NewPlayer(id PlayerID) Player {
+func NewPlayer(id PlayerID, name string) Player {
 	return Player{
-		ID: id,
+		ID:   id,
+		Name: name,
 	}
 }

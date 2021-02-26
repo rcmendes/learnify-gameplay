@@ -34,7 +34,7 @@ func (m *GameModel) Load(game entities.Game) {
 	}
 }
 
-func (m *GameModel) To() entities.Game {
+func (m *GameModel) ToEntity() entities.Game {
 	quizzes := make([]*entities.GameQuiz, 0, len(m.Quizzes))
 	for _, q := range m.Quizzes {
 		quiz := entities.Quiz{}

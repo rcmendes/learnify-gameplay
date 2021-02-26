@@ -37,7 +37,7 @@ func NewQuizModel(quiz entities.Quiz) QuizModel {
 	}
 }
 
-func (q *QuizModel) To() entities.Quiz {
+func (q *QuizModel) ToEntity() entities.Quiz {
 	return entities.Quiz{
 		ID:         q.ID,
 		Image:      entities.MediaInfo{Name: q.ImageFilename},

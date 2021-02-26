@@ -89,6 +89,6 @@ func (repo *gamePostgresRepository) GetByID(id entities.GameID, lazy bool) (*ent
 		return nil, err
 	}
 
-	game := model.To()
+	game := model.ToEntity()
 	return &game, nil
 }

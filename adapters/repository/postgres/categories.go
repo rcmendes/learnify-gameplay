@@ -46,7 +46,7 @@ func (repo *categoryRepository) ListAll() (entities.CategoryList, error) {
 	list := make(entities.CategoryList, 0, len(modelList))
 
 	for _, model := range modelList {
-		c := model.To()
+		c := model.ToEntity()
 		list = append(list, &c)
 	}
 

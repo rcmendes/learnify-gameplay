@@ -21,7 +21,7 @@ func (c *CategoryModel) String() string {
 		c.Name, *c.Description, c.Storable.String())
 }
 
-func (c *CategoryModel) To() entities.Category {
+func (c *CategoryModel) ToEntity() entities.Category {
 	return entities.Category{
 		ID:          c.ID,
 		Name:        c.Name,

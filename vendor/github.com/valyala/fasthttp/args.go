@@ -40,7 +40,7 @@ var argsPool = &sync.Pool{
 // Args represents query arguments.
 //
 // It is forbidden copying Args instances. Create new instances instead
-// and use CopyTo().
+// and use CopyToEntity().
 //
 // Args instance MUST NOT be used from concurrently running goroutines.
 type Args struct {

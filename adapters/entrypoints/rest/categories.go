@@ -31,7 +31,7 @@ func NewCategoryDTOResponse(category *entities.Category) *CategoryDTOResponse {
 	}
 }
 
-func (input *CreateCategoryRequest) To() *entities.NewCategory {
+func (input *CreateCategoryRequest) ToEntity() *entities.NewCategory {
 	return &entities.NewCategory{
 		Name:        input.Name,
 		Description: input.Description,
@@ -95,7 +95,7 @@ func (ctrl *categoryController) Create(c *fiber.Ctx) error {
 		return err
 	}
 
-	id, err := ctrl.create.Create(*createCategoryInput.To())
+	id, err := ctrl.create.Create(*createCategoryInput.ToEntity())
 	//TODO Handle Error
 	if err != nil {
 		c.SendStatus(http.StatusInternalServerError)

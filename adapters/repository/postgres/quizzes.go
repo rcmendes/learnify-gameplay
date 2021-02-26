@@ -32,7 +32,7 @@ func (repo *quizRepository) ListAll() (entities.QuizList, error) {
 
 	var quizzes entities.QuizList
 	for _, qm := range list {
-		quiz := qm.To()
+		quiz := qm.ToEntity()
 		quizzes = append(quizzes, &quiz)
 	}
 
@@ -54,7 +54,7 @@ func (repo *quizRepository) FindQuizByCategoryName(categoryName string) (entitie
 
 	var quizzes entities.QuizList
 	for _, qm := range list {
-		quiz := qm.To()
+		quiz := qm.ToEntity()
 		quizzes = append(quizzes, &quiz)
 	}
 
@@ -84,7 +84,7 @@ func (repo *quizRepository) FindQuizzesSameCategory(id entities.QuizID) (entitie
 
 	var quizzes entities.QuizList
 	for _, qm := range list {
-		quiz := qm.To()
+		quiz := qm.ToEntity()
 		quizzes = append(quizzes, &quiz)
 	}
 
@@ -104,7 +104,7 @@ func (repo *quizRepository) GetQuizByID(id entities.QuizID) (*entities.Quiz, err
 		return nil, err
 	}
 
-	quiz := model.To()
+	quiz := model.ToEntity()
 
 	return &quiz, nil
 }
