@@ -53,7 +53,6 @@ func (repo *gamePostgresRepository) Insert(game entities.Game) error {
 
 func (repo *gamePostgresRepository) Update(game entities.Game, propagate bool) error {
 	conn := repo.connectFunc()
-	defer conn.Close()
 
 	model := models.GameModel{}
 	model.Load(game)
@@ -80,7 +79,6 @@ func (repo *gamePostgresRepository) Update(game entities.Game, propagate bool) e
 func (repo *gamePostgresRepository) GetByID(id entities.GameID, lazy bool) (*entities.Game, error) {
 	//TODO Handle Lazy and Handle GameQuiz
 	conn := repo.connectFunc()
-	defer conn.Close()
 
 	var model models.GameModel
 
@@ -90,5 +88,5 @@ func (repo *gamePostgresRepository) GetByID(id entities.GameID, lazy bool) (*ent
 	}
 
 	game := model.ToEntity()
-	return &game, nil
+	return game, nil
 }

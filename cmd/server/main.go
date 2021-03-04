@@ -5,7 +5,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/rcmendes/learnify-gameplay/adapters/entrypoints/rest"
+	rest "github.com/rcmendes/learnify-gameplay/adapters/api"
 	"github.com/rcmendes/learnify-gameplay/adapters/repository/filesystem"
 	"github.com/rcmendes/learnify-gameplay/adapters/repository/postgres"
 	"github.com/rcmendes/learnify-gameplay/config/routes"
@@ -22,6 +22,7 @@ func main() {
 	categoryRepo := postgres.NewCategoryPostgresRepository()
 	quizRepo := postgres.NewQuizPostgresRepository()
 	gameRepo := postgres.NewGamePostgresRepository()
+	playerRepo := postgres.NewPlayerPostgresRepository()
 	imageRepo := filesystem.NewImageFSRepository("/home/rcmendes/git-projects/learnify/assets/images")
 	audioRepo := filesystem.NewAudioFSRepository("/home/rcmendes/git-projects/learnify/assets/audios")
 
@@ -31,10 +32,10 @@ func main() {
 
 	// Use Cases: Quiz
 	findAllQuizzesUC := ucs.MakeFindAllQuizzes(quizRepo)
-	findQuizByCategoryName := ucs.MakeFindQuizByCategoryName(quizRepo)
+	findQuizByCategoryName := ucs.MakeFindQuizByCategoryName(categoryRepo, quizRepo)
 	findQuiz := ucs.MakeFindQuiz(quizRepo, imageRepo, audioRepo)
 	// Use Cases: Game
-	createGameUC := ucs.MakeCreateGame(gameRepo, quizRepo)
+	createGameUC := ucs.MakeCreateGame(gameRepo, quizRepo, playerRepo)
 	validateAnswerGameQuizUC := ucs.MakeValidateAnswerGameQuiz(gameRepo)
 	findOneNotPlayedGameQuizUC := ucs.MakeFindOneNotPlayedGameQuiz(gameRepo)
 

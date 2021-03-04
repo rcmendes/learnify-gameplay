@@ -10,29 +10,38 @@ import (
 )
 
 type createGame struct {
-	gameRepo ports.GameRepository
-	quizRepo ports.QuizRepository
+	gameRepo   ports.GameRepository
+	quizRepo   ports.QuizRepository
+	playerRepo ports.PlayerRepository
 }
 
-func MakeCreateGame(gameRepo ports.GameRepository, quizRepo ports.QuizRepository) ports.CreateGame {
+func MakeCreateGame(gameRepo ports.GameRepository, quizRepo ports.QuizRepository, playerRepo ports.PlayerRepository) ports.CreateGame {
 	return &createGame{
 		gameRepo,
 		quizRepo,
+		playerRepo,
 	}
 }
 
 //Create is a method that creates a game.
 func (uc *createGame) Create(newGame ports.CreateGameInput) (*entities.GameID, error) {
-	//TODO Validate if the player exists
+	playerID := newGame.PlayerID()
+
+	player, err := uc.playerRepo.GetByID(playerID)
+	if err != nil {
+		//TODO Validate if the player exists
+		//TODO Handle Error
+		return nil, err
+	}
 
 	gameID := uuid.New()
 
-	game := entities.NewGame(gameID, entities.NewPlayer(newGame.PlayerID()))
+	game := entities.NewGame(gameID, *player)
 
 	//TODO Replace for an application parameter.
 	totalOfGameQuizzes := 4
-	category := entities.Category{ID: newGame.CategoryID(), Name: "animais"}
-	quizzes, err := uc.quizRepo.FindQuizByCategoryName(category.Name)
+	// category := entities.Category{ID: newGame.CategoryID(), Name: "animais"}
+	quizzes, err := uc.quizRepo.FindQuizByCategoryID(newGame.CategoryID())
 	if err != nil {
 		//TODO handle error
 		return nil, err
@@ -44,7 +53,7 @@ func (uc *createGame) Create(newGame ports.CreateGameInput) (*entities.GameID, e
 		return nil, fmt.Errorf("no quiz found for this category")
 	}
 
-	//TODO use shufffle
+	//TODO use shuffle
 	for i := 0; i < length && i < totalOfGameQuizzes; i++ {
 		index := rand.Intn(length - 1)
 		quiz := *quizzes[index]

@@ -22,7 +22,6 @@ func NewCategoryPostgresRepository() ports.CategoryRepository {
 
 func (repo *categoryRepository) Insert(category entities.Category) error {
 	conn := repo.connectFunc()
-	defer conn.Close()
 
 	model := models.NewCategoryModel(category)
 
@@ -35,7 +34,6 @@ func (repo *categoryRepository) Insert(category entities.Category) error {
 
 func (repo *categoryRepository) ListAll() (entities.CategoryList, error) {
 	conn := repo.connectFunc()
-	defer conn.Close()
 
 	var modelList []*models.CategoryModel
 
@@ -47,8 +45,24 @@ func (repo *categoryRepository) ListAll() (entities.CategoryList, error) {
 
 	for _, model := range modelList {
 		c := model.ToEntity()
-		list = append(list, &c)
+		list = append(list, c)
 	}
 
 	return list, nil
+}
+
+func (repo *categoryRepository) GetByName(name string) (*entities.Category, error) {
+	conn := repo.connectFunc()
+
+	var model models.CategoryModel
+
+	if err := conn.Model(&model).
+		Where("name = ?", name).
+		Select(); err != nil {
+		return nil, err
+	}
+
+	category := model.ToEntity()
+
+	return category, nil
 }

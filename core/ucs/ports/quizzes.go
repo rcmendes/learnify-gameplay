@@ -5,7 +5,7 @@ import "github.com/rcmendes/learnify-gameplay/core/entities"
 //QuizRepository defines the contract of a Quiz entity repository.
 type QuizRepository interface {
 	ListAll() (entities.QuizList, error)
-	FindQuizByCategoryName(categoryName string) (entities.QuizList, error)
+	FindQuizByCategoryID(categoryID entities.CategoryID) (entities.QuizList, error)
 	GetQuizByID(id entities.QuizID) (*entities.Quiz, error)
 	FindQuizzesSameCategory(id entities.QuizID) (entities.QuizList, error)
 }
@@ -15,7 +15,11 @@ type FindAllQuizzes interface {
 }
 
 type FindQuizByCategoryName interface {
-	FindByCategoryName(categoryName string) (entities.QuizList, error)
+	FindByCategoryName(category string) (entities.QuizList, error)
+}
+
+type FindQuizByCategoryID interface {
+	FindByCategoryID(categoryID entities.CategoryID) (entities.QuizList, error)
 }
 
 type FindQuizzesSameCategory interface {

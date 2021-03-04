@@ -1,13 +1,16 @@
 package models
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/rcmendes/learnify-gameplay/core/entities"
 )
 
 type PlayerModel struct {
-	ID   uuid.UUID
-	Name string
+	CreatedAt *time.Time `db:"created_at"`
+	ID        uuid.UUID  `db:"id"`
+	Name      string     `db:"name"`
 }
 
 func NewPlayerModel(player entities.Player) *PlayerModel {

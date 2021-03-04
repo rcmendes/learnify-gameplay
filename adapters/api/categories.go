@@ -16,6 +16,10 @@ type CreateCategoryRequest struct {
 	Description *string `json:"description"`
 }
 
+func (req *CreateCategoryRequest) isValid() bool {
+	return req.Name != ""
+}
+
 //CategoryDTOResponse defines the response structure of a Category.
 type CategoryDTOResponse struct {
 	ID          uuid.UUID `json:"id"`
@@ -88,14 +92,18 @@ func (ctrl *categoryController) ListAll(c *fiber.Ctx) error {
 }
 
 func (ctrl *categoryController) Create(c *fiber.Ctx) error {
-	createCategoryInput := CreateCategoryRequest{}
+	payload := new(CreateCategoryRequest)
 
-	if err := c.BodyParser(&createCategoryInput); err != nil {
+	if err := c.BodyParser(payload); err != nil || !payload.isValid() {
+		return fiber.ErrBadRequest
+	}
+
+	if err := c.BodyParser(&payload); err != nil {
 		c.SendStatus(http.StatusBadRequest)
 		return err
 	}
 
-	id, err := ctrl.create.Create(*createCategoryInput.ToEntity())
+	id, err := ctrl.create.Create(*payload.ToEntity())
 	//TODO Handle Error
 	if err != nil {
 		c.SendStatus(http.StatusInternalServerError)

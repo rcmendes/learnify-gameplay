@@ -22,7 +22,6 @@ func NewQuizPostgresRepository() ports.QuizRepository {
 
 func (repo *quizRepository) ListAll() (entities.QuizList, error) {
 	conn := repo.connectFn()
-	defer conn.Close()
 
 	var list []models.QuizModel
 
@@ -30,40 +29,30 @@ func (repo *quizRepository) ListAll() (entities.QuizList, error) {
 		return nil, err
 	}
 
-	var quizzes entities.QuizList
-	for _, qm := range list {
-		quiz := qm.ToEntity()
-		quizzes = append(quizzes, &quiz)
-	}
+	quizzes := *convertQuizModelListToQuizEntityList(&list)
 
 	return quizzes, nil
 }
 
-func (repo *quizRepository) FindQuizByCategoryName(categoryName string) (entities.QuizList, error) {
+func (repo *quizRepository) FindQuizByCategoryID(categoryID entities.CategoryID) (entities.QuizList, error) {
 	conn := repo.connectFn()
-	defer conn.Close()
 
 	var list []models.QuizModel
 
 	if err := conn.Model(&list).
-		Where("category = ?", categoryName).
+		Where("category_id = ?", categoryID).
 		Select(); err != nil {
 
 		return nil, err
 	}
 
-	var quizzes entities.QuizList
-	for _, qm := range list {
-		quiz := qm.ToEntity()
-		quizzes = append(quizzes, &quiz)
-	}
+	quizzes := *convertQuizModelListToQuizEntityList(&list)
 
 	return quizzes, nil
 }
 
 func (repo *quizRepository) FindQuizzesSameCategory(id entities.QuizID) (entities.QuizList, error) {
 	conn := repo.connectFn()
-	defer conn.Close()
 
 	//TODO improve this code for better performance. 2 Queries => 1 query.
 
@@ -76,24 +65,19 @@ func (repo *quizRepository) FindQuizzesSameCategory(id entities.QuizID) (entitie
 	var list []models.QuizModel
 
 	if err := conn.Model(&list).
-		Where("category = ?", quiz.CategoryID).
+		Where("category_id = ?", quiz.CategoryID).
 		Select(); err != nil {
 
 		return nil, err
 	}
 
-	var quizzes entities.QuizList
-	for _, qm := range list {
-		quiz := qm.ToEntity()
-		quizzes = append(quizzes, &quiz)
-	}
+	quizzes := *convertQuizModelListToQuizEntityList(&list)
 
 	return quizzes, nil
 }
 
 func (repo *quizRepository) GetQuizByID(id entities.QuizID) (*entities.Quiz, error) {
 	conn := repo.connectFn()
-	defer conn.Close()
 
 	var model models.QuizModel
 
@@ -106,5 +90,15 @@ func (repo *quizRepository) GetQuizByID(id entities.QuizID) (*entities.Quiz, err
 
 	quiz := model.ToEntity()
 
-	return &quiz, nil
+	return quiz, nil
+}
+
+func convertQuizModelListToQuizEntityList(list *[]models.QuizModel) *entities.QuizList {
+	quizzes := make(entities.QuizList, 0, len(*list))
+	for _, qm := range *list {
+		quiz := qm.ToEntity()
+		quizzes = append(quizzes, quiz)
+	}
+
+	return &quizzes
 }

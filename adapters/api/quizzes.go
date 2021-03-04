@@ -75,6 +75,8 @@ func (controller *quizController) ListAll(c *fiber.Ctx) error {
 			return err
 		}
 	} else {
+		//TODO fetch category from database
+		//Add the player repository into the use case and allows search from the category name as a use case
 		quizzes, err = controller.findByCategoryName.FindByCategoryName(category)
 	}
 

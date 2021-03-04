@@ -6,6 +6,7 @@ import "github.com/rcmendes/learnify-gameplay/core/entities"
 type CategoryRepository interface {
 	Insert(category entities.Category) error
 	ListAll() (entities.CategoryList, error)
+	GetByName(name string) (*entities.Category, error)
 }
 
 type CreateCategory interface {

@@ -45,8 +45,8 @@ func (req *CreateGameRequest) PlayerID() uuid.UUID {
 
 }
 
-func (req *CreateGameRequest) Validate() bool {
-	return req.CategoryId == nil || req.PlayerId == nil
+func (req *CreateGameRequest) isValid() bool {
+	return req.CategoryId != nil && req.PlayerId != nil
 }
 
 //CreateGameResponse defines the contract of the response of creating a Game.
@@ -71,7 +71,7 @@ type CreateGameResponse struct {
 func (ctrl *gameController) Create(c *fiber.Ctx) error {
 	request := new(CreateGameRequest)
 
-	if err := c.BodyParser(request); err != nil || request.Validate() {
+	if err := c.BodyParser(request); err != nil || !request.isValid() {
 		return fiber.ErrBadRequest
 	}
 
